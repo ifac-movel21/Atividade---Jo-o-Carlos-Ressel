@@ -149,7 +149,7 @@ export default () => {
   const [items, setItems] = useState(lista);
 
   const addNewItem = (txt) => {
-   
+    let newItems = [...items]
     newItems.push({
       id: uuidv4(),
       task: txt,
@@ -160,12 +160,12 @@ export default () => {
   }
 
   const toggleDone = (index) => {
-    
+    let newItems = [...items]
     newItems[index].done = !newItems[index].done
     setItems(newItems)
 
   }
-  
+
   //Pagina
   return (
     <Page>
@@ -251,7 +251,7 @@ export default () => {
               }
             
               />
-              <Texto>{fez}</Texto>
+              <Texto>{}</Texto>
               </>
         }
         
