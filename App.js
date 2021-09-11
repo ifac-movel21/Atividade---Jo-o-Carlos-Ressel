@@ -1,15 +1,18 @@
-import React, { useEffect, useState } from "react";
-import  lista from "./components/lista";
+import React, { useState, useEffect } from "react";
+import lista from "./components/lista";
 import styled from "styled-components";
 import ListaItem, { fez } from "./components/ListaItem.js";
 import AddItemArea from "./components/AddItemArea.js";
 import { v4 as uuidv4 } from 'uuid';
 import "react-native-get-random-values";
+import { SwipeListView } from "react-native-swipe-list-view";
+import ListaItemSwipe from "./components/listaItemSwipe.js";
+import AsyncStorage from "@react-native-community/async-storage";
 
 //Styleds
 const Page = styled.View`
   background-color: #000000;
-  flex: 1;s
+  flex: 1;
 `
 
 const HeaderText = styled.Text`
@@ -103,10 +106,20 @@ const Listagem = styled.FlatList`
 const Texto = styled.Text`
   line-height: 50px;
   text-align: center;
-  font-size: 18px;
-  font-weight: bold;
-  color: #659658;
-  text-decoration: underline;
+  font-size: 20px;
+  color: #FFF;
+`
+const Texto2 = styled.Text`
+  line-height: 50px;
+  text-align: center;
+  font-size: 20px;
+  color: red;
+`
+const Texto3 = styled.Text`
+  line-height: 50px;
+  text-align: center;
+  font-size: 20px;
+  color: green;
 `
 
 
@@ -130,22 +143,12 @@ export default () => {
   let aul = parseInt(aulas);
 
   //Calculos
-  const media = (n1 + n2) / 2
+  
 
-  const calc = () => {
-    setOk(!ok)
-    setPct(((aul - falt) / aul) * 100)
-    //verificação
-
-    if (media > 6 && pct < 25) {
-      setResultado("Aprovado")
-    } else {
-      setResultado("Reprovado")
-    }
-  }
   const showlista = () => {
     setOkLista(!okLista)
   }
+
   const [items, setItems] = useState(lista);
 
   const addNewItem = (txt) => {
@@ -165,6 +168,81 @@ export default () => {
     setItems(newItems)
 
   }
+  const deleteItem = (index) => {
+    let newItems = [...items]
+    newItems = newItems.filter((it, i) => i != index)
+
+    setItems(newItems)
+
+  }
+  //contagem de feitas e não feitas
+  var somaV = 0
+  var somaF = 0
+
+  let newItems = [...items]
+  for (var verdade of newItems) {
+    if (verdade.done === true) somaV++;
+  }
+  for (var falso of newItems) {
+    if (falso.done === false) somaF++;
+  }
+  const media = (n1 + n2) / 2
+  //salvando dados
+  const handleSave = async () => {
+    if (nome != '' && curso != '' && disciplina != '' && nota1 != '' && nota2 != '' && aulas != '' && faltas != '') {
+      await AsyncStorage.setItem('@nome', nome)
+      await AsyncStorage.setItem('@curso', curso)
+      await AsyncStorage.setItem('@disciplina', disciplina)
+      await AsyncStorage.setItem('@nota1', n1)
+      await AsyncStorage.setItem('@nota2', n2)
+      await AsyncStorage.setItem('@aulas', aul)
+      await AsyncStorage.setItem('@faltas', falt)
+      await AsyncStorage.setItem('@resultado', resultado)
+      setNome(nome);
+      setCurso(curso);
+      setDisciplina(disciplina);
+      setNota1(n1);
+      setNota2(n2);
+      setAulas(aul);
+      setFaltas(falt);
+      
+    setOk(!ok)
+    setPct(((aul - falt) / aul) * 100)
+    //verificação
+
+    if (media > 6 && pct < 25) {
+      setResultado("Aprovado")
+    } else {
+      setResultado("Reprovado")
+    }
+    }
+  }
+  const getTudo = async () => {
+    const nm = await AsyncStorage.getItem('@nome')
+    setNome(nm)
+
+    const cs = await AsyncStorage.getItem('@curso')
+    setCurso(cs)
+
+    const dc = await AsyncStorage.getItem('@disciplina')
+    setDisciplina(dc)
+
+    const n1 = await AsyncStorage.getItem('@nota1')
+    setNota1(n1)
+
+    const n2 = await AsyncStorage.getItem('@nota2')
+    setNota1(n2)
+
+    const al = await AsyncStorage.getItem('@aulas')
+    setNota1(al)
+
+    const ft = await AsyncStorage.getItem('@faltas')
+    setNota1(ft)
+  }
+  useEffect(() => {
+    getTudo();
+  }, []);
+
 
   //Pagina
   return (
@@ -218,12 +296,9 @@ export default () => {
           keyboardType="numeric"
           onChangeText={ft => setFaltas(ft)}
         />
-
         <Btn>
-          <TextBtn onPress={calc}>Relatório</TextBtn>
+          <TextBtn onPress={handleSave}>Relatório</TextBtn>
         </Btn>
-
-
         {ok &&
           <AreaRelatorio>
             <RelatorioTitle>Relatório Semestral</RelatorioTitle>
@@ -239,25 +314,28 @@ export default () => {
         </BtnLista>
         {okLista &&
           <>
-            <AddItemArea onAdd={addNewItem}/>
-            <Listagem
+            <AddItemArea onAdd={addNewItem} />
+            <SwipeListView
               data={items}
               renderItem={({ item, index }) =>
                 <ListaItem
                   onPress={() => toggleDone(index)}
                   data={item}
                 />
-                
               }
-            
-              />
-              <Texto>{}</Texto>
-              </>
+              leftOpenValue={50}
+              disableLeftSwipe={true}
+              renderHiddenItem={({ index }) =>
+                <ListaItemSwipe onDelete={() => deleteItem(index)} />}
+            />
+            <Texto>Status das atividades:</Texto>
+            <Texto3 >{somaV} Feitas</Texto3>
+            <Texto2 >{somaF} Não Feitas</Texto2>
+          </>
         }
-        
+
       </Scroll>
-
     </Page>
-
   )
 }
+
